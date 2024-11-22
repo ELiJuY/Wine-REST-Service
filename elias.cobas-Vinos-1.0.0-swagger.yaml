@@ -1,0 +1,705 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Vinos
+  description: API para dar soporte a un servicio online de comunidad para la gestión y  recomendación de vinos
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/elias.cobas/Vinos/1.0.0
+  - description: Garages App entrypoint
+    url: http://vinos.app/api
+tags:
+  - name: usuarios
+    description: Usuarios registrados en la aplicacion
+  - name: vinos
+    description: Vinos valorados por los distintos usuarios
+  - name: puntuacion
+    description: Nota otorgada por los usuarios a un determinado vino
+  - name: seguidores
+    description: Seguidores de un usuario
+  - name: recomendaciones
+    description: Recomendaciones de los distintos usuarios
+paths:
+  /usuarios:
+    post:
+      tags:
+        - usuarios
+      summary: Crear un usuario nuevo
+      operationId: crearUsuario
+      requestBody:
+        $ref: '#/components/requestBodies/Usuario'
+      responses:
+        '201':
+          headers:
+            Location:
+              description: URL del usuario creado. >-
+                 E.g. '/usuarios/miguel.1990'
+              schema:
+                type: string
+          description: Usuario creado
+        '400':
+          description: Errores de formato o usuario menor de edad
+    get:
+      tags:
+        - usuarios
+      summary: Lista de los usuarios de la aplicación
+      operationId: getUsuarios
+      parameters:
+        - in: query
+          name: start
+          schema:
+            type: integer
+            default: 0
+          description: Número de índice del primer elemento a devolver (para paginación)
+        - in: query
+          name: count
+          schema:
+            type: integer
+            default: 10
+          description: Número de elementos a devolver
+        - in: query
+          name: patron
+          schema:
+            type: string
+          description: Patrón de nombre para filtrar usuarios
+          required: false
+      responses:
+        '200':
+          description: Operacion exitosa
+          headers:
+            Content-Location: 
+              description: URL de la representacion. >-
+                E.g. '/usuarios?start=0&count=10'
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuarios'
+
+  /usuarios/{nombre_usuario}:
+    put:
+      tags:
+        - usuarios
+      summary: Cambiar datos básicos de nuestro perfil de usuario
+      operationId: updateUsuario
+      parameters:
+        - name: nombre_usuario
+          in: path
+          description: Nombre del usuario que se actualiza
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: '#/components/requestBodies/Usuario'
+      responses:
+        '204':
+          description: Datos del usuario actualizados con exito
+        '400':
+          description: Errores de formato en el body
+    get:
+      tags:
+        - usuarios
+      summary: Obtiene la representacion de un Usuario
+      operationId: getUsuario
+      parameters:
+        - name: nombre_usuario
+          in: path
+          description: Nombre del usuario que se devuelve
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Operacion exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '404':
+          description: Usuario no encontrado
+    delete:
+      tags:
+        - usuarios
+      summary: Borra a un usuario
+      operationId: deleteUsuario
+      parameters:
+        - name: nombre_usuario
+          in: path
+          description: Nombre del usuario que se borra
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Usuario borrado con exito
+        '404':
+          description: Usuario no encontrado
+ 
+  /usuarios/{nombre_usuario}/vinos:
+    post:
+      tags:
+        - vinos
+      summary: Añade un vino a la lista de un usuario
+      operationId: añadirVino
+      requestBody:
+        $ref: '#/components/requestBodies/Vino'
+      parameters:
+        - name: nombre_usuario
+          in: path
+          description: Nombre del usuario propietario de la lista a la que se añade el vino
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          headers:
+            Location:
+              description: URL del vino añadido a la lista. >-
+                 E.g. '/usuarios/miguel.1990/vinos/Rioja'
+              schema:
+                type: string
+          description: Vino añadido
+        '400':
+          description: Errores de formato en el body
+    get:
+      tags:
+        - vinos
+      summary: Lista de los vinos de un usuario
+      operationId: getVinos
+      parameters:
+        - in: path
+          name: nombre_usuario
+          description: Nombre del usuario propietario de la lista que se consulta
+          required: true
+          schema:
+            type: string        
+        - in: query
+          name: start
+          schema:
+            type: integer
+            default: 0
+          description: Número de índice del primer elemento a devolver (para paginación)
+        - in: query
+          name: count
+          schema:
+            type: integer
+            default: 10
+          description: Número de elementos a devolver
+        - in: query
+          name: fecha_prev
+          schema:
+            type: integer
+          description: Vinos añadidos antes de cierta fecha
+          required: false
+        - in: query
+          name: fecha_post
+          schema:
+            type: integer
+          description: Vinos añadidos tras cierta fecha
+          required: false
+        - in: query
+          name: bodega
+          schema:
+            type: string
+          description: Filtrar por bodega de procedencia
+          required: false
+        - in: query
+          name: año_prev
+          schema:
+            type: integer
+          description: Vinos de año anterior a cierta fecha
+          required: false
+        - in: query
+          name: año
+          schema:
+            type: integer
+          description: Vinos de cierto año
+          required: false
+        - in: query
+          name: año_post
+          schema:
+            type: integer
+          description: Vinos de año posterior a cierta fecha
+          required: false
+        - in: query
+          name: tipo_de_vino
+          schema:
+            type: string
+          description: Vinos de cierto tipo
+          required: false
+        - in: query
+          name: origen
+          schema:
+            type: string
+          description: Filtrar por pais de origen del vino
+          required: false
+        - in: query
+          name: uva
+          schema:
+            type: string
+          description: Filtrar por tipo de uva del vino
+          required: false
+          
+      responses:
+        '200':
+          description: Operacion exitosa
+          headers:
+            Content-Location: 
+              description: URL de la representacion. >-
+                E.g. '/usuarios/usuario1000/vinos?start=0&count=10'
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vinos'
+  /usuarios/{nombre_usuario}/vinos/{id_vino}:
+    delete:
+      tags:
+        - vinos
+      summary: Borra un vino de una lista
+      operationId: deleteVino
+      parameters:
+        - name: nombre_usuario
+          in: path
+          description: Nombre del usuario propietario de la lista de la cual se borra el vino
+          required: true
+          schema:
+            type: string
+        - name: id_vino
+          in: path
+          description: Nombre del vino que se borra
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Vino borrado con exito
+        '404':
+          description: Vino o usuario no encontrado
+  /usuarios/{nombre_usuario}/vinos/{id_vino}/puntuacion:
+    post:
+      tags:
+        - puntuacion
+      summary: Añade una puntuacion a un vino de la lista de un usuario
+      operationId: añadirPuntuacion
+      requestBody:
+        $ref: '#/components/requestBodies/Puntuacion'
+      parameters:
+        - name: nombre_usuario
+          in: path
+          description: Nombre del usuario propietario de la lista
+          required: true
+          schema:
+            type: string
+        - name: id_vino
+          in: path
+          description: Identificador del vino que se puntua
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          headers:
+            Location:
+              description: URL de la puntuacion añadida al vino. >-
+                 E.g. '/usuarios/miguel.1990/vinos/Rioja/puntuacion'
+              schema:
+                type: string
+          description: Puntuacion añadida
+        '400':
+          description: Errores de formato en el body
+    put:
+      tags:
+        - puntuacion
+      summary: Actualiza una puntuacion de un vino de la lista de un usuario
+      operationId: updatePuntuacion
+      parameters:
+        - name: nombre_usuario
+          in: path
+          description: Nombre del usuario propietario de la lista
+          required: true
+          schema:
+            type: string
+        - name: id_vino
+          in: path
+          description: Identificador del vino que se puntua
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: '#/components/requestBodies/Puntuacion'
+      responses:
+        '204':
+          description: Puntuacion actualizada con exito
+        '400':
+          description: Errores de formato en el body
+  /usuarios/{nombre_usuario}/seguidores:
+    post:
+      tags:
+        - seguidores
+      summary: Añade un seguidor a un usuario
+      operationId: añadirSeguidor
+      requestBody:
+        $ref: '#/components/requestBodies/Usuario'
+      parameters:
+        - name: nombre_usuario
+          in: path
+          description: Nombre del usuario propietario que añade un seguidor
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          headers:
+            Location:
+              description: URL del seguidor añadido. >-
+                 E.g. '/usuarios/miguel.1990/seguidores/pepe1234'
+              schema:
+                type: string
+          description: Seguidor añadido
+        '400':
+          description: Errores de formato en el body
+    get:
+      tags:
+        - seguidores
+      summary: Lista de los seguidores de un usuario
+      operationId: getSeguidores
+      parameters:
+        - in: path
+          name: nombre_usuario
+          description: Nombre del usuario cuyos seguidores se consultan
+          required: true
+          schema:
+            type: string        
+        - in: query
+          name: start
+          schema:
+            type: integer
+            default: 0
+          description: Número de índice del primer elemento a devolver (para paginación)
+        - in: query
+          name: count
+          schema:
+            type: integer
+            default: 10
+          description: Número de elementos a devolver
+        - in: query
+          name: patron
+          schema:
+            type: string
+          description: Patrón de nombre para filtrar seguidores
+          required: false
+      responses:
+        '200':
+          description: Operacion exitosa
+          headers:
+            Content-Location: 
+              description: URL de la representacion. >-
+                E.g. '/usuarios/usuario1000/seguidores?start=0&count=10'
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vinos'
+  /usuarios/{nombre_usuario}/seguidores/{nombre_seguidor}:
+    delete:
+      tags:
+        - seguidores
+      summary: Borra un seguidor
+      operationId: deleteSeguidor
+      parameters:
+        - name: nombre_usuario
+          in: path
+          description: Nombre del usuario seguido
+          required: true
+          schema:
+            type: string
+        - name: nombre_seguidor
+          in: path
+          description: Nombre del seguidor a borrar
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Seguidor borrado con exito
+        '404':
+          description: Usuario o seguidor no encontrados
+  /usuarios/{nombre_usuario}/seguidores/{nombre_seguidor}/vinos:
+    get:
+      tags:
+        - seguidores
+      summary: Lista de los vinos de un seguidor
+      operationId: getVinosSeguidor
+      parameters:
+        - in: path
+          name: nombre_usuario
+          description: Nombre del usuario seguido
+          required: true
+          schema:
+            type: string        
+        - in: path
+          name: nombre_seguidor
+          description: Nombre del seguidor cuya lista se consulta
+          required: true
+          schema:
+            type: string     
+        - in: query
+          name: start
+          schema:
+            type: integer
+            default: 0
+          description: Número de índice del primer elemento a devolver (para paginación)
+        - in: query
+          name: count
+          schema:
+            type: integer
+            default: 10
+          description: Número de elementos a devolver
+        - in: query
+          name: fecha_prev
+          schema:
+            type: integer
+          description: Vinos añadidos antes de cierta fecha
+          required: false
+        - in: query
+          name: fecha_post
+          schema:
+            type: integer
+          description: Vinos añadidos tras cierta fecha
+          required: false
+        - in: query
+          name: bodega
+          schema:
+            type: string
+          description: Filtrar por bodega de procedencia
+          required: false
+        - in: query
+          name: año_prev
+          schema:
+            type: integer
+          description: Vinos de año anterior a cierta fecha
+          required: false
+        - in: query
+          name: año
+          schema:
+            type: integer
+          description: Vinos de cierto año
+          required: false
+        - in: query
+          name: año_post
+          schema:
+            type: integer
+          description: Vinos de año posterior a cierta fecha
+          required: false
+        - in: query
+          name: tipo_de_vino
+          schema:
+            type: string
+          description: Vinos de cierto tipo
+          required: false
+        - in: query
+          name: origen
+          schema:
+            type: string
+          description: Filtrar por pais de origen del vino
+          required: false
+        - in: query
+          name: uva
+          schema:
+            type: string
+          description: Filtrar por tipo de uva del vino
+          required: false
+          
+      responses:
+        '200':
+          description: Operacion exitosa
+          headers:
+            Content-Location: 
+              description: URL de la representacion. >-
+                E.g. '/usuarios/usuario1000/seguidores/miguel.1990/vinos?start=0&count=10'
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vinos'
+  /usuarios/{nombre_usuario}/recomendaciones:
+    get:
+      tags:
+        - recomendaciones
+      summary: Obtiene la recomendacion de vinos de un usuario
+      operationId: getRecomendacion
+      parameters:
+        - name: nombre_usuario
+          in: path
+          description: Nombre del usuario cuya recomendacion se solicita
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Operacion exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recomendacion'
+        '404':
+          description: Usuario no encontrado
+
+components:
+  schemas:
+    Usuario:
+      type: object
+      required:
+        - nombre_de_usuario
+        - fecha_nacimiento
+        - correo
+      properties:
+        nombre_de_usuario:
+          type: string
+          example: 'miguel.1990'
+        fecha_nacimiento:
+          type: string
+          example: '2003-08-05'
+        correo:
+          type: string
+          example: 'miguel@gmail.com'
+        href:
+          type: string
+          format: uri
+          example: '/usuario/miguel.1990'
+    Usuarios:
+      type: object
+      required:
+        - href
+        - items
+      properties:
+        href:
+          type: string
+          example: '/usuarios?start=10&count=10'
+        previous:
+          type: string
+          example: '/usuarios?start=0&count=10'
+        next:
+          type: string
+          example: '/usuarios?start=20&count=10'
+        items:
+          type: array
+          required:
+            - href
+          items:
+            $ref: '#/components/schemas/Usuario'
+    Vino:
+      type: object
+      required:
+        - nombre_botella
+        - bodega_origen
+        - añada
+        -	tipo_de_vino
+        -	tipos_de_uva
+        -	origen
+        -	año
+      properties:
+        nombre_botella:
+          type: string
+          example: 'Rioja'
+        bodega_origen:
+          type: string
+          example: 'Catena Zapata'
+        añada:
+          type: integer
+          example: 2015
+        tipo_de_vino:
+          type: string
+          example: 'tinto'
+        tipos_de_uva:
+          type: array
+          items:
+            type: string
+          example: ['Tempranillo', 'Garnacha']
+        origen:
+          type: string
+          example: 'España'
+        año:
+          type: integer
+          example: 2017
+        href:
+          type: string
+          format: uri
+          example: '/usuario/pepe1234/vinos/rioja'
+    Vinos:
+      type: object
+      required:
+        - href
+        - items
+      properties:
+        href:
+          type: string
+          example: '/usuarios/manuelHD/vinos?start=10&count=10'
+        previous:
+          type: string
+          example: '/usuarios/manuelHD/vinos?start=0&count=10'
+        next:
+          type: string
+          example: '/usuarios/manuelHD/vinos?start=20&count=10'
+        items:
+          type: array
+          required:
+            - href
+          items:
+            $ref: '#/components/schemas/Vino'
+
+    Puntuacion:
+      type: integer
+      example: 9
+    Recomendacion:
+      type: object
+      required:
+        - usuario
+        - ultimos_vinos
+        - mejores_vinos
+        -	mejores_vinos_amigos
+      properties:
+        usuario:
+            $ref: '#/components/schemas/Usuario'
+        ultimos_vinos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vino'
+        mejores_vinos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vino'
+        mejores_vinos_amigos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vino'
+
+  requestBodies:
+      Usuario:
+        description: Usuario a añadir a la app
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Usuario'
+              
+      Vino:
+        description: Vino a añadir a una lista
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vino'
+      Puntuacion:
+        description: Puntuacion a añadir a un vino
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Puntuacion'
